@@ -2,8 +2,12 @@
   <div class="container-fluid" id="app">
     <div class="card-body pt-0">
       <div class="row">
-        <div id="sidebar" class="col-md-3 col-sm-12 col-xs-12 sidebar shadow">
+        <div id="sidebar" class="col-md-3 col-sm-3 col-xs-12 col-12 sidebar shadow">
           <div id="selection">
+            <div id="countySummary">
+              <p v-for="summary in countySummary" :key="summary.fips"><strong>{{summary.countyName}}:</strong> Cases {{summary.cases}}, Deaths {{summary.deaths}}</p>
+              
+            </div>
             <select v-model="selected" @change="selectCounty($event)">
               <option disabled value="">Please select one</option>
               <option>Chester County</option>
@@ -23,15 +27,16 @@
           </div>
         </div>
         <!-- <div class="col-md-12 col-sm-12 col-xs-12" id="banner">Vitable Coronavirus Heatmap</div> -->
-        <div class="col-md-8 col-sm-12 col-xs-12">
+        <div class="col-md-8 col-sm-8 col-xs-12 col-12">
           <div id="mapwrapper" class="shadow">
             <div id="banner" class="row"><h1><strong>Vitable Coronavirus Heatmap</strong></h1></div>
             <div id="maprow" class="row">
               <div id="map">
                 <div class="loader"></div>
-                <svg width="960" height="600"/>
+                <svg id="mapsvg"/>
               </div>
             </div>
+            <div id="disclaimer" class="row"><p>Data from <a href="https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html">The New York Times</a></p></div>
           </div>
         </div>
       </div>
@@ -49,6 +54,28 @@ export default {
       selected: 'Delaware County',
       countyData: {},
       data: [],
+      countySummary: [
+        {
+          "countyName":"Philadelphia County",
+          "fips":"42101"
+        },
+        {
+          "countyName":"Montgomery County",
+          "fips": "42091"
+        },
+        {
+          "countyName":"Delaware County",
+          "fips": "42045"
+        },
+        {
+          "countyName":"Bucks County",
+          "fips": "42017"
+        },
+        {
+          "countyName":"Chester County",
+          "fips": "42029"
+        },
+      ]
     }
   },
   methods: {
@@ -66,6 +93,9 @@ export default {
     },
     setCountyData(countyName, data) {
       this.countyData[countyName] = data;
+    },
+    setCountySummaries(countySummaries) {
+      this.countySummary = countySummaries
     }
   },
   mounted: async function() {
@@ -100,6 +130,29 @@ export default {
       component.setCountyData("Montgomery County", d);
     });
 
+    var countySummaries = [
+      {
+        "countyName":"Philadelphia County",
+        "fips":"42101"
+      },
+      {
+        "countyName":"Montgomery County",
+        "fips": "42091"
+      },
+      {
+        "countyName":"Delaware County",
+        "fips": "42045"
+      },
+      {
+        "countyName":"Bucks County",
+        "fips": "42017"
+      },
+      {
+        "countyName":"Chester County",
+        "fips": "42029"
+      },
+    ];
+
     var colorScale = d3.scaleLinear()
       .interpolate(d3.interpolateRgb)
       .range([d3.rgb("#FFFFFF"), d3.rgb('#710019')]);
@@ -126,6 +179,7 @@ export default {
       stateIds.sort((a,b) => (a.id > b.id) ? 1 : -1);
 
       d3.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv").then(function(covidData) {
+
         var extent = d3.extent(covidData, function(d) {return parseInt(d.cases);})
         extent[1] = extent[1]/25
         extent[0] = 0;
@@ -163,10 +217,18 @@ export default {
             }
             color = colorScale(caseData !== null ? caseData.cases : 0);
           }
+          countySummaries.forEach(countySum => {
+            if (countySum.fips === d.properties.id) {
+              console.log("matched county " + countySum + " caseData " + caseData);
+              countySum["cases"] = caseData.cases;
+              countySum["deaths"] = caseData.deaths;
+            }
+          })
           d.properties.caseData = caseData;
           d.properties.color = color;
         })
-
+        console.log("county summaries" + JSON.stringify(countySummaries));
+        component.setCountySummaries(countySummaries);
         setColors();
 
       });
@@ -212,16 +274,20 @@ export default {
               tooltip.html("<p><strong>" + dataProperties.name + ", " + dataProperties.stateName + "</strong><p>" +
               "<p>Cases: " + numCases + "</p>" +
               "<p>Deaths: " + numDeaths)  
-              .style("left", (d3.event.pageX - offsetLeft - tooltipWidth*.8) + "px")   
-              .style("top", (d3.event.pageY - offsetTop - tooltipHeight*1.5) + "px");
+              // .style("left", (d3.event.pageX - offsetLeft - tooltipWidth*.8) + "px")   
+              // .style("top", (d3.event.pageY - offsetTop - tooltipHeight*1.5) + "px");
+              .style("left",d3.event.pageX + "px")
+              .style("top", d3.event.pageY + "px");
         } else {
           tooltip
               .style("opacity", 0.9);    
               tooltip.html("<p><strong>" + dataProperties.name + ", " + dataProperties.stateName + "</strong><p>" +
               "<p>Cases for " + exceptional[0] + ": " + numCases + "</p>" +
               "<p>Deaths for " + exceptional[0] + ": " + numDeaths)  
-              .style("left", (d3.event.pageX - offsetLeft - tooltipWidth*0.8) + "px")   
-              .style("top", (d3.event.pageY - offsetTop - tooltipHeight*1.5) + "px");
+              // .style("left", (d3.event.pageX - offsetLeft - tooltipWidth*0.8) + "px")   
+              // .style("top", (d3.event.pageY - offsetTop - tooltipHeight*1.5) + "px");
+              .style("left",d3.event.pageX + "px")
+              .style("top", d3.event.pageY + "px");
         }
       }
 
@@ -325,11 +391,11 @@ export default {
     stroke:black;
   }
 
-  text {
-    font-weight: 500;
-    font-size: 18px;
-    color: #081f2c;
-  }
+  // text {
+  //   font-weight: 500;
+  //   font-size: 18px;
+  //   color: #081f2c;
+  // }
 
   div.tooltip { 
     position: absolute;     
@@ -356,6 +422,7 @@ export default {
     width: 100%;
     height: 6rem;
     color: rgb(247, 247, 247);
+    font-size: 2rem;
   }
 
   #mapwrapper {
@@ -371,9 +438,22 @@ export default {
     height: 100%;
   }
 
-  #maprow {
-    width: 100%;
+  #mapsvg {
+    width: 90%;
     height: 90%;
+  }
+
+  #maprow {
+    height: 80%;
+  }
+
+  #disclaimer {
+    text-align: left;
+    padding-left: 1.5rem;
+    margin-left: 0px;
+    margin-right: 0px;
+    width: 100%;
+    font-size: 1.5rem;
   }
 
   #sidebar {
@@ -381,15 +461,22 @@ export default {
     display: flex;
     flex-direction: column;
     background-color: rgb(0, 178, 160);
-    margin-right: 100px;
+    margin-right: 5%;
     color: rgb(247, 247, 247);
     padding-left: 0px;
     padding-right: 0px;
+    height: 80vh;
     #info {
         position: relative;
         margin-top: 20px;
         width: 100%;
     }
+  }
+
+  #countySummary {
+    padding-left: 1.5rem;
+    text-align: left;
+    font-size: 1.5rem;
   }
 
   #scrollable {
@@ -438,11 +525,14 @@ export default {
     padding-top: 1.5rem;
     background-color: rgb(1,80,90);
     width: 100%;
-    height: 6rem;
     font-size: 1.6rem;
     
   }
 
+  select {
+    margin-bottom: 2rem;
+    width: 90%;
+  }
 
   .centered {
       position: fixed;
@@ -456,24 +546,18 @@ export default {
     100% { transform: rotate(360deg); }
   }
 
-  @media only screen and (min-width: 768px) {
-      #sidebar {
-          height: 80vh;
-      }
-      .wrapper-right {
-          margin-top: 80px;
-      }
+  @media only screen and (max-width: 576px) {
+    h1 {
+      font-size: 2rem;
+    }
+
+    #sidebar {
+      height: 50vh;
+    }
+    #mapwrapper {
+      height: 80vh;
+      margin-top: 5vh;
+    }
   }
-  @media only screen and (min-width:1440px) {
-      #sidebar {
-          width: 350px;
-          max-width: 350px;
-          flex: auto;
-      }
-      #dashboard-content {
-          width: calc(100% — 350px);
-          max-width: calc(100% — 350px);
-          flex: auto;
-      }
-  }
+
 </style>
