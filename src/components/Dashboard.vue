@@ -1,7 +1,40 @@
 <template>
-  <div class="custom-card header-card card">
+  <div class="container-fluid" id="app">
     <div class="card-body pt-0">
-      <svg width="975" height="610"/>
+      <div class="row">
+        <div id="sidebar" class="col-md-3 col-sm-12 col-xs-12 sidebar shadow">
+          <div id="selection">
+            <select v-model="selected" @change="selectCounty($event)">
+              <option disabled value="">Please select one</option>
+              <option>Chester County</option>
+              <option>Delaware County</option>
+              <option>Montgomery County</option>
+            </select>
+          </div>
+          <div id="scrollable">
+            <h2 id="info"><strong>{{ selected }}</strong></h2>
+            <ul id="countyList">
+              <li v-for="township in data" :key="township.ID" id="countyListItem">
+                <h3>{{township.ID}}</h3>
+                <p id="townshipDetail">Cases: {{township.Value}}</p>
+                <p id="townshipDetail">Deaths: {{township.C}}</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <!-- <div class="col-md-12 col-sm-12 col-xs-12" id="banner">Vitable Coronavirus Heatmap</div> -->
+        <div class="col-md-8 col-sm-12 col-xs-12">
+          <div id="mapwrapper" class="shadow">
+            <div id="banner" class="row"><h1><strong>Vitable Coronavirus Heatmap</strong></h1></div>
+            <div id="maprow" class="row">
+              <div id="map">
+                <div class="loader"></div>
+                <svg width="960" height="600"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -13,13 +46,35 @@ export default {
   components: {},
   data() {
     return {
-
+      selected: 'Delaware County',
+      countyData: {},
+      data: [],
+    }
+  },
+  methods: {
+    selectCounty(event) {
+      console.log("setting county " + event.target.value)
+      let countyName = event.target.value;
+      this.data = this.countyData[countyName];
+      console.log("data updated " + this.data);
+    },
+    selectCountyOnMount(countyName) {
+      console.log("setting county " + countyName);
+      console.log("county data " + JSON.stringify(this.countyData));
+      this.data = this.countyData[countyName];
+      console.log("data updated " + JSON.stringify(this.data));
+    },
+    setCountyData(countyName, data) {
+      this.countyData[countyName] = data;
     }
   },
   mounted: async function() {
-    var svg = d3.select("svg").style("margin-top","20px");
+    var chesterCountyCsv = "data:application/octet-stream;charset=utf-8,ID%2CValue%2CC%0AWest%20Grove%20Borough%2C0%2C0%0ANew%20London%20Township%2C0%2C0%0AHoney%20Brook%20Borough%2C0%2C0%0AEast%20Fallowfield%20Township%2C1%2C0%0ACaln%20Township%2C2%2C0%0AValley%20Township%2C0%2C0%0AElk%20Township%2C0%2C0%0AOxford%20Borough%2C1%2C0%0AWillistown%20Township%2C3%2C0%0AAvondale%20Borough%2C0%2C0%0AWest%20Fallowfield%20Township%2C0%2C0%0AAtglen%20Borough%2C0%2C0%0AFranklin%20Township%2C0%2C0%0APhoenixville%20Borough%2C0%2C0%0AParkesburg%20Borough%2C0%2C0%0ASouth%20Coventry%20Township%2C0%2C0%0AWest%20Nottingham%20Township%2C0%2C0%0AWest%20Marlborough%20Township%2C0%2C0%0ASpring%20City%20Borough%2C1%2C0%0ALondon%20Britain%20Township%2C1%2C0%0AEast%20Nantmeal%20Township%2C0%2C0%0AWest%20Caln%20Township%2C1%2C0%0AEast%20Caln%20Township%2C0%2C0%0ASchuylkill%20Township%2C0%2C0%0ACity%20of%20Coatesville%2C0%2C0%0AThornbury%20Township%2C0%2C0%0AEast%20Goshen%20Township%2C5%2C0%0AWest%20Pikeland%20Township%2C3%2C0%0AKennett%20Township%2C0%2C0%0AEast%20Marlborough%20Township%2C2%2C0%0AWest%20Chester%20Borough%2C7%2C0%0AEast%20Brandywine%20Township%2C1%2C0%0ADowningtown%20Borough%2C1%2C0%0AWest%20Brandywine%20Township%2C0%2C0%0AEast%20Bradford%20Township%2C2%2C0%0AWallace%20Township%2C0%2C0%0AEast%20Whiteland%20Township%2C8%2C0%0AEast%20Coventry%20Township%2C1%2C0%0ABirmingham%20Township%2C2%2C0%0ANew%20Garden%20Township%2C1%2C0%0ANorth%20Coventry%20Township%2C1%2C0%0ANewlin%20Township%2C0%2C0%0AWest%20Goshen%20Township%2C3%2C0%0APenn%20Township%2C0%2C0%0AWest%20Whiteland%20Township%2C4%2C0%0APennsbury%20Township%2C2%2C0%0AEast%20Pikeland%20Township%2C3%2C0%0AEast%20Vincent%20Township%2C3%2C0%0AUpper%20Oxford%20Township%2C1%2C0%0AWest%20Vincent%20Township%2C1%2C0%0AHoney%20Brook%20Township%2C2%2C0%0AUpper%20Uwchlan%20Township%2C3%2C0%0AWest%20Bradford%20Township%2C1%2C0%0AUwchlan%20Township%2C8%2C0%0ALondonderry%20Township%2C0%2C0%0ASouth%20Coatesville%20Borough%2C0%2C0%0ALower%20Oxford%20Township%2C0%2C0%0AEasttown%20Township%2C9%2C0%0AWesttown%20Township%2C0%2C0%0ALondon%20Grove%20Township%2C0%2C0%0AKennett%20Square%20Borough%2C1%2C0%0AEast%20Nottingham%20Township%2C1%2C0%0AMalvern%20Borough%2C1%2C0%0ACharlestown%20Township%2C2%2C0%0ATredyffrin%20Township%2C1%2C0%0AModena%20Borough%2C0%2C0%0AWest%20Nantmeal%20Township%2C0%2C0%0AWarwick%20Township%2C0%2C0%0AElverson%20Borough%2C0%2C0%0APocopson%20Township%2C0%2C0%0AHighland%20Township%2C0%2C0%0ASadsbury%20Township%2C0%2C0%0AWest%20Sadsbury%20Township%2C0%2C0";
+    var delawareCountyCsv = "data:application/octet-stream;charset=utf-8,ID%2CValue%2CC%0AYeadon%20Borough%2C2%2C0%0AAldan%20Borough%2C1%2C0%0ATinicum%20Township%2C0%2C0%0ARose%20Valley%20Borough%2C2%2C0%0ALower%20Chichester%20Township%2C0%2C0%0ALansdowne%20Borough%2C1%2C0%0ARidley%20Township%2C6%2C0%0AProspect%20Park%20Borough%2C1%2C0%0AHaverford%20Township%2C21%2C0%0AChadds%20Ford%20Township%2C1%2C0%0ARidley%20Park%20Borough%2C4%2C1%0ASwarthmore%20Borough%2C4%2C0%0AUpland%20Borough%2C0%2C0%0AEdgmont%20Township%2C0%2C0%0AMarcus%20Hook%20Borough%2C0%2C0%0AParkside%20Borough%2C0%2C0%0AMillbourne%20Borough%2C1%2C0%0AUpper%20Chichester%20Township%2C5%2C0%0ACollingdale%20Borough%2C1%2C0%0AColwyn%20Borough%2C0%2C0%0AGlenolden%20Borough%2C0%2C0%0AChester%20Heights%20Borough%2C0%2C0%0AUpper%20Providence%20Township%2C4%2C0%0AMarple%20Township%2C11%2C1%0ANorwood%20Borough%2C1%2C0%0AClifton%20Heights%20Borough%2C3%2C0%0AAston%20Township%2C5%2C0%0AChester%20Township%2C1%2C0%0ASpringfield%20Township%2C7%2C0%0ARutledge%20Borough%2C0%2C0%0ADarby%20Township%2C0%2C0%0AConcord%20Township%2C4%2C0%0AThornbury%20Township%2C5%2C0%0AMorton%20Borough%2C3%2C0%0AMiddletown%20Township%2C10%2C1%0ADarby%20Borough%2C1%2C0%0AEddystone%20Borough%2C1%2C0%0ABrookhaven%20Borough%2C1%2C0%0ARadnor%20Township%2C21%2C0%0ATrainer%20Borough%2C1%2C0%0ANewtown%20Township%2C11%2C0%0AEast%20Lansdowne%20Borough%2C2%2C0%0AFolcroft%20Borough%2C0%2C0%0AUpper%20Darby%20Township%2C27%2C0%0ASharon%20Hill%20Borough%2C12%2C0%0ABethel%20Township%2C2%2C0%0AMedia%20Borough%2C2%2C0%0AChester%20City%2C3%2C0%0ANether%20Providence%20Township%2C9%2C0";
+    var montgomeryCountyCsv = "data:application/octet-stream;charset=utf-8,ID%2CValue%2CC%0AUpper%20Merion%20Township%2C13%2C0%0ACheltenham%20Township%2C28%2C1%0ABridgeport%20Borough%2C0%2C0%0AJenkintown%20Borough%2C2%2C0%0AConshohocken%20Borough%2C5%2C0%0ARockledge%20Borough%2C0%2C0%0AWest%20Conshohocken%20Borough%2C0%2C0%0ALower%20Merion%20Township%2C68%2C0%0AUpper%20Hanover%20Township%2C1%2C0%0AEast%20Greenville%20Borough%2C0%2C0%0APennsburg%20Borough%2C0%2C0%0AWest%20Pottsgrove%20Township%2C1%2C0%0AMontgomery%20Township%2C6%2C0%0ATowamencin%20Township%2C4%2C0%0APottstown%20Borough%2C5%2C0%0ASchwenksville%20Borough%2C2%2C0%0APerkiomen%20Township%2C4%2C0%0ALansdale%20Borough%2C4%2C0%0ASkippack%20Township%2C6%2C0%0AUpper%20Gwynedd%20Township%2C4%2C0%0AHorsham%20Township%2C7%2C0%0AWorcester%20Township%2C10%2C0%0ANarberth%20Borough%2C2%2C0%0ALimerick%20Township%2C8%2C0%0ARoyersford%20Borough%2C1%2C0%0AWest%20Norriton%20Township%2C5%2C0%0AAbington%20Township%2C31%2C2%0AUpper%20Providence%20Township%2C11%2C0%0ANorth%20Wales%20Borough%2C0%2C0%0ALower%20Gwynedd%20Township%2C9%2C0%0ATrappe%20Borough%2C1%2C0%0ACollegeville%20Borough%2C3%2C0%0ALower%20Providence%20Township%2C27%2C0%0AWhitpain%20Township%2C10%2C0%0AUpper%20Moreland%20Township%2C4%2C0%0AHatboro%20Borough%2C1%2C0%0AUpper%20Dublin%20Township%2C14%2C0%0AEast%20Norriton%20Township%2C6%2C0%0AAmbler%20Borough%2C5%2C0%0ALower%20Moreland%20Township%2C10%2C0%0ABryn%20Athyn%20Borough%2C0%2C0%0ADouglass%20Township%2C1%2C0%0AMarlborough%20Township%2C0%2C0%0ARed%20Hill%20Borough%2C0%2C0%0ANew%20Hanover%20Township%2C2%2C0%0ASalford%20Township%2C1%2C0%0AUpper%20Frederick%20Township%2C3%2C0%0AGreen%20Lane%20Borough%2C0%2C0%0AFranconia%20Township%2C0%2C0%0AUpper%20Salford%20Township%2C0%2C0%0ATelford%20Borough%2C0%2C0%0ASouderton%20Borough%2C3%2C0%0ALower%20Frederick%20Township%2C0%2C0%0AHatfield%20Township%2C2%2C0%0AUpper%20Pottsgrove%20Township%2C1%2C0%0ALower%20Salford%20Township%2C4%2C0%0AHatfield%20Borough%2C0%2C0%0ALower%20Pottsgrove%20Township%2C2%2C0%0AWhitemarsh%20Township%2C9%2C1%0APlymouth%20Township%2C9%2C0%0ANorristown%20Borough%2C4%2C0%0ASpringfield%20Township%2C12%2C0";
+    var svg = d3.select("svg").style("margin-top","0px").style("display","none").style("background-color","#D2D2D2");
     var path = d3.geoPath();
-    var tooltipHeight = 100;
+    var tooltipHeight = 60;
     var tooltipWidth = 200;
 
     var zoom = d3.zoom().on("zoom", zoomed);
@@ -28,7 +83,22 @@ export default {
 
     var div;
 
+    var component = this;
+
     var stateIds = [];
+    d3.csv(chesterCountyCsv).then(function(d) {
+      console.log(d);
+      component.setCountyData("Chester County", d);
+    })
+    d3.csv(delawareCountyCsv).then(function(d) {
+      console.log(d);
+      component.setCountyData("Delaware County", d);
+      component.selectCountyOnMount("Delaware County");
+    })
+    d3.csv(montgomeryCountyCsv).then(function(d) {
+      console.log(d);
+      component.setCountyData("Montgomery County", d);
+    });
 
     var colorScale = d3.scaleLinear()
       .interpolate(d3.interpolateRgb)
@@ -119,6 +189,10 @@ export default {
         .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })))
         .style("stroke", "black");
 
+      g.append("path")
+        .attr("d",path(topojson.merge(us, us.objects.states.geometries.filter(function(d) { return d.id; }))))
+        .attr("class", "us-border");
+
       var focus;
       function mouseover() {
         focus = d3.select(this).style("opacity",1).style("stroke","#aa0026");
@@ -138,7 +212,7 @@ export default {
               tooltip.html("<p><strong>" + dataProperties.name + ", " + dataProperties.stateName + "</strong><p>" +
               "<p>Cases: " + numCases + "</p>" +
               "<p>Deaths: " + numDeaths)  
-              .style("left", (d3.event.pageX - offsetLeft - tooltipWidth*1.1) + "px")   
+              .style("left", (d3.event.pageX - offsetLeft - tooltipWidth*.8) + "px")   
               .style("top", (d3.event.pageY - offsetTop - tooltipHeight*1.5) + "px");
         } else {
           tooltip
@@ -146,8 +220,8 @@ export default {
               tooltip.html("<p><strong>" + dataProperties.name + ", " + dataProperties.stateName + "</strong><p>" +
               "<p>Cases for " + exceptional[0] + ": " + numCases + "</p>" +
               "<p>Deaths for " + exceptional[0] + ": " + numDeaths)  
-              .style("left", (d3.event.pageX - offsetLeft - tooltipWidth) + "px")   
-              .style("top", (d3.event.pageY - offsetTop - tooltipHeight*1.3) + "px");
+              .style("left", (d3.event.pageX - offsetLeft - tooltipWidth*0.8) + "px")   
+              .style("top", (d3.event.pageY - offsetTop - tooltipHeight*1.5) + "px");
         }
       }
 
@@ -170,6 +244,8 @@ export default {
         .style("fill", function(d) {
           return d.properties.color;
         })
+      svg.style("display", "block");
+      d3.select(".loader").style("display","none");
     }
 
     
@@ -180,8 +256,6 @@ export default {
       g.style("stroke-width", 1.5 / d3.event.transform.k + "px");
       // g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")"); // not in d3 v4
       g.attr("transform", d3.event.transform); // updated for d3 v4
-
-      console.log(" exiting paths " + JSON.stringify(g.selectAll("path").exit()));
     }
 
     // Exceptions for New York, Kings, Queens, Bronx, Richmond -> New York City
@@ -203,6 +277,28 @@ export default {
 </script>
 
 <style lang="scss">
+  :root {
+    font-size: 62.5%;
+  }
+
+  #app {
+    font-family: 'Avenir', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    padding-top: 30px;
+  }
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  li {
+    display: inline-block;
+    margin: 0 10px;
+  }
+
   #county {
     fill: #D2D2D2;
     &:hover {
@@ -224,6 +320,11 @@ export default {
     pointer-events: none;
   }
 
+  .us-border {
+    fill: none;
+    stroke:black;
+  }
+
   text {
     font-weight: 500;
     font-size: 18px;
@@ -233,14 +334,146 @@ export default {
   div.tooltip { 
     position: absolute;     
     text-align: left;     
-    width: 200px;          
-    height: 120px;         
     padding: 12px;       
     font: 12px sans-serif;
-    color: #EBEBEB;   
-    background: #3b4850; 
+    color: rgb(247, 247, 247);  
+    background: rgb(0, 178, 160);; 
     border: 0px;        
     pointer-events: none;
     border-radius: 10%;     
+  }
+
+  div#banner.row {
+    margin-right: 0px;
+    margin-left: 0px;
+  }
+
+  #banner {
+    display: flex;
+    justify-content: center;
+    padding-top: 1.5rem;
+    background-color:rgb(0, 178, 160); 
+    width: 100%;
+    height: 6rem;
+    color: rgb(247, 247, 247);
+  }
+
+  #mapwrapper {
+    height: 100%;
+    width: 100%
+  }
+
+  #map {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  #maprow {
+    width: 100%;
+    height: 90%;
+  }
+
+  #sidebar {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(0, 178, 160);
+    margin-right: 100px;
+    color: rgb(247, 247, 247);
+    padding-left: 0px;
+    padding-right: 0px;
+    #info {
+        position: relative;
+        margin-top: 20px;
+        width: 100%;
+    }
+  }
+
+  #scrollable {
+    overflow-y: auto;
+    height: 100%;
+  }
+
+  #countyList {
+    margin-top: 20px;
+    text-align: left;
+    width: 90%;
+    height: 90px;
+    line-height: 90px;
+    padding-top: 1rem;
+    #countyListItem {
+        border-bottom: 1px solid #FFFFFF;
+        width: 100%;
+        height: 80px;
+        line-height: 80px;
+    }
+  }
+
+  #townshipDetail {
+    font-size: 1.5rem;
+    line-height: 1.5rem;
+  }
+
+  .shadow {
+    -moz-box-shadow:    3px 3px 5px 6px #ccc;
+    -webkit-box-shadow: 3px 3px 5px 6px #ccc;
+    box-shadow:         3px 3px 5px 6px #ccc;
+  }
+
+  .loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid rgb(0, 178, 160);
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+    display: inline-block;
+
+  }
+
+  #selection {
+    padding-top: 1.5rem;
+    background-color: rgb(1,80,90);
+    width: 100%;
+    height: 6rem;
+    font-size: 1.6rem;
+    
+  }
+
+
+  .centered {
+      position: fixed;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @media only screen and (min-width: 768px) {
+      #sidebar {
+          height: 80vh;
+      }
+      .wrapper-right {
+          margin-top: 80px;
+      }
+  }
+  @media only screen and (min-width:1440px) {
+      #sidebar {
+          width: 350px;
+          max-width: 350px;
+          flex: auto;
+      }
+      #dashboard-content {
+          width: calc(100% — 350px);
+          max-width: calc(100% — 350px);
+          flex: auto;
+      }
   }
 </style>
