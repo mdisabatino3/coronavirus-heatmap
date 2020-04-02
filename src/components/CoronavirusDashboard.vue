@@ -1,5 +1,12 @@
 <template>
   <div class="card-body root-container">
+    <div id="myModal" class="modal">
+      <!-- Modal content -->
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <svg id="linechartsvg"></svg>
+      </div>
+    </div>
     <div class="sideinfo-container">
       <div id="sidebar" class="sidebar">
         <div id="countySummary" class="shadow">
@@ -152,7 +159,7 @@ export default {
     var chesterCountyCsv = "data:application/octet-stream;charset=utf-8,ID%2CValue%2CC%0AWest%20Grove%20Borough%2C0%2C0%0ANew%20London%20Township%2C0%2C0%0AHoney%20Brook%20Borough%2C0%2C0%0AEast%20Fallowfield%20Township%2C1%2C0%0ACaln%20Township%2C2%2C0%0AValley%20Township%2C0%2C0%0AElk%20Township%2C0%2C0%0AOxford%20Borough%2C1%2C0%0AWillistown%20Township%2C3%2C0%0AAvondale%20Borough%2C0%2C0%0AWest%20Fallowfield%20Township%2C0%2C0%0AAtglen%20Borough%2C0%2C0%0AFranklin%20Township%2C0%2C0%0APhoenixville%20Borough%2C0%2C0%0AParkesburg%20Borough%2C0%2C0%0ASouth%20Coventry%20Township%2C0%2C0%0AWest%20Nottingham%20Township%2C0%2C0%0AWest%20Marlborough%20Township%2C0%2C0%0ASpring%20City%20Borough%2C1%2C0%0ALondon%20Britain%20Township%2C1%2C0%0AEast%20Nantmeal%20Township%2C0%2C0%0AWest%20Caln%20Township%2C1%2C0%0AEast%20Caln%20Township%2C0%2C0%0ASchuylkill%20Township%2C0%2C0%0ACity%20of%20Coatesville%2C0%2C0%0AThornbury%20Township%2C0%2C0%0AEast%20Goshen%20Township%2C5%2C0%0AWest%20Pikeland%20Township%2C3%2C0%0AKennett%20Township%2C0%2C0%0AEast%20Marlborough%20Township%2C2%2C0%0AWest%20Chester%20Borough%2C7%2C0%0AEast%20Brandywine%20Township%2C1%2C0%0ADowningtown%20Borough%2C1%2C0%0AWest%20Brandywine%20Township%2C0%2C0%0AEast%20Bradford%20Township%2C2%2C0%0AWallace%20Township%2C0%2C0%0AEast%20Whiteland%20Township%2C8%2C0%0AEast%20Coventry%20Township%2C1%2C0%0ABirmingham%20Township%2C2%2C0%0ANew%20Garden%20Township%2C1%2C0%0ANorth%20Coventry%20Township%2C1%2C0%0ANewlin%20Township%2C0%2C0%0AWest%20Goshen%20Township%2C3%2C0%0APenn%20Township%2C0%2C0%0AWest%20Whiteland%20Township%2C4%2C0%0APennsbury%20Township%2C2%2C0%0AEast%20Pikeland%20Township%2C3%2C0%0AEast%20Vincent%20Township%2C3%2C0%0AUpper%20Oxford%20Township%2C1%2C0%0AWest%20Vincent%20Township%2C1%2C0%0AHoney%20Brook%20Township%2C2%2C0%0AUpper%20Uwchlan%20Township%2C3%2C0%0AWest%20Bradford%20Township%2C1%2C0%0AUwchlan%20Township%2C8%2C0%0ALondonderry%20Township%2C0%2C0%0ASouth%20Coatesville%20Borough%2C0%2C0%0ALower%20Oxford%20Township%2C0%2C0%0AEasttown%20Township%2C9%2C0%0AWesttown%20Township%2C0%2C0%0ALondon%20Grove%20Township%2C0%2C0%0AKennett%20Square%20Borough%2C1%2C0%0AEast%20Nottingham%20Township%2C1%2C0%0AMalvern%20Borough%2C1%2C0%0ACharlestown%20Township%2C2%2C0%0ATredyffrin%20Township%2C1%2C0%0AModena%20Borough%2C0%2C0%0AWest%20Nantmeal%20Township%2C0%2C0%0AWarwick%20Township%2C0%2C0%0AElverson%20Borough%2C0%2C0%0APocopson%20Township%2C0%2C0%0AHighland%20Township%2C0%2C0%0ASadsbury%20Township%2C0%2C0%0AWest%20Sadsbury%20Township%2C0%2C0";
     var delawareCountyCsv = "data:application/octet-stream;charset=utf-8,ID%2CValue%2CC%0AYeadon%20Borough%2C2%2C0%0AAldan%20Borough%2C1%2C0%0ATinicum%20Township%2C0%2C0%0ARose%20Valley%20Borough%2C2%2C0%0ALower%20Chichester%20Township%2C0%2C0%0ALansdowne%20Borough%2C1%2C0%0ARidley%20Township%2C6%2C0%0AProspect%20Park%20Borough%2C1%2C0%0AHaverford%20Township%2C21%2C0%0AChadds%20Ford%20Township%2C1%2C0%0ARidley%20Park%20Borough%2C4%2C1%0ASwarthmore%20Borough%2C4%2C0%0AUpland%20Borough%2C0%2C0%0AEdgmont%20Township%2C0%2C0%0AMarcus%20Hook%20Borough%2C0%2C0%0AParkside%20Borough%2C0%2C0%0AMillbourne%20Borough%2C1%2C0%0AUpper%20Chichester%20Township%2C5%2C0%0ACollingdale%20Borough%2C1%2C0%0AColwyn%20Borough%2C0%2C0%0AGlenolden%20Borough%2C0%2C0%0AChester%20Heights%20Borough%2C0%2C0%0AUpper%20Providence%20Township%2C4%2C0%0AMarple%20Township%2C11%2C1%0ANorwood%20Borough%2C1%2C0%0AClifton%20Heights%20Borough%2C3%2C0%0AAston%20Township%2C5%2C0%0AChester%20Township%2C1%2C0%0ASpringfield%20Township%2C7%2C0%0ARutledge%20Borough%2C0%2C0%0ADarby%20Township%2C0%2C0%0AConcord%20Township%2C4%2C0%0AThornbury%20Township%2C5%2C0%0AMorton%20Borough%2C3%2C0%0AMiddletown%20Township%2C10%2C1%0ADarby%20Borough%2C1%2C0%0AEddystone%20Borough%2C1%2C0%0ABrookhaven%20Borough%2C1%2C0%0ARadnor%20Township%2C21%2C0%0ATrainer%20Borough%2C1%2C0%0ANewtown%20Township%2C11%2C0%0AEast%20Lansdowne%20Borough%2C2%2C0%0AFolcroft%20Borough%2C0%2C0%0AUpper%20Darby%20Township%2C27%2C0%0ASharon%20Hill%20Borough%2C12%2C0%0ABethel%20Township%2C2%2C0%0AMedia%20Borough%2C2%2C0%0AChester%20City%2C3%2C0%0ANether%20Providence%20Township%2C9%2C0";
     var montgomeryCountyCsv = "data:application/octet-stream;charset=utf-8,ID%2CValue%2CC%0AUpper%20Merion%20Township%2C13%2C0%0ACheltenham%20Township%2C28%2C1%0ABridgeport%20Borough%2C0%2C0%0AJenkintown%20Borough%2C2%2C0%0AConshohocken%20Borough%2C5%2C0%0ARockledge%20Borough%2C0%2C0%0AWest%20Conshohocken%20Borough%2C0%2C0%0ALower%20Merion%20Township%2C68%2C0%0AUpper%20Hanover%20Township%2C1%2C0%0AEast%20Greenville%20Borough%2C0%2C0%0APennsburg%20Borough%2C0%2C0%0AWest%20Pottsgrove%20Township%2C1%2C0%0AMontgomery%20Township%2C6%2C0%0ATowamencin%20Township%2C4%2C0%0APottstown%20Borough%2C5%2C0%0ASchwenksville%20Borough%2C2%2C0%0APerkiomen%20Township%2C4%2C0%0ALansdale%20Borough%2C4%2C0%0ASkippack%20Township%2C6%2C0%0AUpper%20Gwynedd%20Township%2C4%2C0%0AHorsham%20Township%2C7%2C0%0AWorcester%20Township%2C10%2C0%0ANarberth%20Borough%2C2%2C0%0ALimerick%20Township%2C8%2C0%0ARoyersford%20Borough%2C1%2C0%0AWest%20Norriton%20Township%2C5%2C0%0AAbington%20Township%2C31%2C2%0AUpper%20Providence%20Township%2C11%2C0%0ANorth%20Wales%20Borough%2C0%2C0%0ALower%20Gwynedd%20Township%2C9%2C0%0ATrappe%20Borough%2C1%2C0%0ACollegeville%20Borough%2C3%2C0%0ALower%20Providence%20Township%2C27%2C0%0AWhitpain%20Township%2C10%2C0%0AUpper%20Moreland%20Township%2C4%2C0%0AHatboro%20Borough%2C1%2C0%0AUpper%20Dublin%20Township%2C14%2C0%0AEast%20Norriton%20Township%2C6%2C0%0AAmbler%20Borough%2C5%2C0%0ALower%20Moreland%20Township%2C10%2C0%0ABryn%20Athyn%20Borough%2C0%2C0%0ADouglass%20Township%2C1%2C0%0AMarlborough%20Township%2C0%2C0%0ARed%20Hill%20Borough%2C0%2C0%0ANew%20Hanover%20Township%2C2%2C0%0ASalford%20Township%2C1%2C0%0AUpper%20Frederick%20Township%2C3%2C0%0AGreen%20Lane%20Borough%2C0%2C0%0AFranconia%20Township%2C0%2C0%0AUpper%20Salford%20Township%2C0%2C0%0ATelford%20Borough%2C0%2C0%0ASouderton%20Borough%2C3%2C0%0ALower%20Frederick%20Township%2C0%2C0%0AHatfield%20Township%2C2%2C0%0AUpper%20Pottsgrove%20Township%2C1%2C0%0ALower%20Salford%20Township%2C4%2C0%0AHatfield%20Borough%2C0%2C0%0ALower%20Pottsgrove%20Township%2C2%2C0%0AWhitemarsh%20Township%2C9%2C1%0APlymouth%20Township%2C9%2C0%0ANorristown%20Borough%2C4%2C0%0ASpringfield%20Township%2C12%2C0";
-    var svg = d3.select("svg").style("margin-top","0px").style("display","none").style("background-color","#D2D2D2");
+    var svg = d3.select("#mapsvg").style("margin-top","0px").style("display","none").style("background-color","#D2D2D2");
     var path = d3.geoPath();
     var tooltipHeight = 60;
     var tooltipWidth = 200;
@@ -303,6 +310,9 @@ export default {
           if (exceptional != null) {
             caseData = countyDataByFips[exceptional[0]] != null ? countyDataByFips[exceptional[0]] : null;
           } else {
+            if (d.properties.id == "36029") {
+              console.log("Erie data" + console.log(countyDataByFips[d.properties.id]))
+            }
             caseData = countyDataByFips[d.properties.id] != null ? countyDataByFips[d.properties.id] : null;
           }
           if (caseData != null) {
@@ -413,8 +423,70 @@ export default {
       d3.select(".loader").style("display","none");
     }
 
+    /* Line chart business */
+    var modal = d3.select("#myModal");
+    var close = d3.select(".close").on("click", ()=>{
+      modal.style("display","none");
+    });
+    const lineChartSvg = d3.select("#linechartsvg");
+    var svgWidth;
+    var svgHeight;
+    var lcMargin = {top: 40, right: 120, bottom: 80, left: 40}
+    var lineChartWidth;
+    var lineChartHeight;
+    var x;
+    var y;
+    var line;
+    var lineChart = lineChartSvg.append('g').attr("id","lineChart");
+    const parseTime = d3.timeParse("%Y-%m-%d");
 
     function clicked() {
+      console.log("clicked");
+      let dataProperties = d3.select(this).data()[0].properties;
+      console.log("data properties " + JSON.stringify(dataProperties));
+      let data = []
+      console.log("data" + JSON.stringify(data));
+      dataProperties.caseData.forEach((d) => {
+        data.push({
+          "date": parseTime(d.date),
+          "cases": +d.cases,
+          "deaths": + d.deaths
+        })
+      });
+      console.log("data update " + JSON.stringify(data));
+      modal.style("display","flex");
+      svgWidth = +lineChartSvg.style("width").replace("px","");
+      console.log("svg width " + svgWidth)
+      svgHeight = +lineChartSvg.style("height").replace("px","");
+      console.log("svg height " +svgHeight);
+      lineChartWidth = svgWidth - lcMargin.left - lcMargin.right;
+      console.log("line chart width " + lineChartWidth);
+      lineChartHeight = svgHeight - lcMargin.top - lcMargin.bottom;
+      console.log("lineChartHeight " + lineChartHeight);
+      lineChart
+        .attr('transform', 'translate(' + lcMargin.left + ',' + lcMargin.top + ')');
+      x = d3.scaleTime().domain(d3.extent(data.map(d => d.date))).range([0, lineChartWidth]);
+      y = d3.scaleLinear().domain(d3.extent(data.map(d => d.cases))).range([lineChartHeight, 0]);
+      line = d3.line().x(d => x(d.date)).y(d => y(d.cases));
+      updateLineChart(data);
+      // lineChart
+      //   .append("path")
+      //   .data([data])
+      //   .attr("class","line")
+      //   .attr("d",line);
+      
+    }
+
+    function updateLineChart(data) {
+      var u = lineChart.selectAll("path")
+        .data([data])
+      u.enter()
+        .append("path")
+        .merge(u)
+        .attr("class", "line")
+        .attr("d",line)
+
+      u.exit().remove();
     }
 
     function zoomed() {
@@ -657,6 +729,54 @@ export default {
     -webkit-box-shadow: 0 8px 6px -6px black;
     -moz-box-shadow: 0 8px 6px -6px black;
     box-shadow: 0 8px 6px -6px black;
+
+  .modal
+    display: none  
+    align-items: center 
+    justify-content: center
+    display: none
+    z-index: 1
+    left: 0
+    top: 0
+    width: 100%
+    height: 100vh
+    overflow: auto
+    background-color: rgb(0,0,0)
+    background-color: rgba(0,0,0,0.4)
+    position: absolute
+
+  .modal-content
+    height: 40%
+    background-color: #fefefe
+    padding: 20px
+    border: 1px solid #888
+    width: 40%
+  
+  #linechartsvg
+    height: 100%
+    width: 100%
+
+  .line
+    fill: none;
+    stroke: #d4d8da;
+    stroke-width: 1px;
+    text-anchor: end;
+
+  .close 
+    color: #aaa
+    float: right
+    font-size: 28px
+    font-weight: bold
+
+  .close
+    &:focus
+      color: black
+      text-decoration: none
+      cursor: pointer
+    &:hover
+      color: black
+      text-decoration: none
+      cursor: pointer
     
 
   @keyframes spin
@@ -682,5 +802,7 @@ export default {
     #mapsvg
       width: 90%
       height: 23em
+    .modal-content
+      width: 80%
 
 </style>
