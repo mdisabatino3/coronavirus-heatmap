@@ -5,11 +5,11 @@
 </template>
 
 <script>
-import Dashboard from './Dashboard';
+import CoronavirusDashboard from './CoronavirusDashboard';
 export default {
  props: [],
  components: {
-   'dashboard': Dashboard,
+   'dashboard': CoronavirusDashboard,
  },
  data() {
    console.log("in Content")
