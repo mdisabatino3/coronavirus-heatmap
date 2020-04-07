@@ -4,7 +4,9 @@
       <!-- Modal content -->
       <div class="modal-content">
         <span class="close">&times;</span>
+        <h1 id="linecharthead"></h1>
         <svg id="linechartsvg"></svg>
+        <div id="linetooltip"></div>
       </div>
     </div>
     <div class="sideinfo-container">
@@ -204,10 +206,6 @@ export default {
       },
     ];
 
-    var colorScale = d3.scaleLog()
-      .interpolate(d3.interpolateRgb)
-      .range([d3.rgb("#FFFFFF"), d3.rgb('#710019')]);
-
 
     svg.call(zoom).call(zoom.transform, d3.zoomIdentity.translate(-3600,-800).scale(5)); // delete this line to disable free zooming
     const stateDataByFips = {};
@@ -295,10 +293,14 @@ export default {
         component.setCountySummaries(countySummaries);
         
         var extent = d3.extent(covidData, function(d) {return parseInt(d.cases);})
-        extent[1] = extent[1] * .015
-        // extent[0] = 0;
-        colorScale.domain(extent);
+        // extent[1] = extent[1] * .15
+        extent[0] = 1;
+        var colorScale = d3.scaleLog()
+          .domain(extent)
+          .range(["#FFFFFF", '#710019'])
+        console.log("extent " + extent);
         us.objects.counties.geometries.forEach(function(d) {
+          
           d.properties.id = d.id;
           d.properties.stateId = d.id.toString().slice(0,2);
           d.properties.stateName = stateIds[d.properties.stateId];
@@ -327,7 +329,7 @@ export default {
             newCases = 0;
             newDeaths = 0;
           }
-          color = colorScale(caseData !== null ? caseData[0].cases : 0);
+          color = colorScale(caseData != null ? parseInt(caseData[0].cases) : 0);
           d.properties.caseData = caseData;
           d.properties.color = color;
           d.properties.newCases = newCases;
@@ -427,18 +429,24 @@ export default {
     var modal = d3.select("#myModal");
     var close = d3.select(".close").on("click", ()=>{
       modal.style("display","none");
+      modal.selectAll("rect").remove();
+      modal.selectAll("#axis").remove();
+      modal.selectAll("circle").remove();
+      modal.selectAll("path").remove();
     });
     const lineChartSvg = d3.select("#linechartsvg");
     var svgWidth;
     var svgHeight;
-    var lcMargin = {top: 40, right: 120, bottom: 80, left: 40}
+    var lcMargin = {top: 0, right: 20, bottom: 80, left: 20}
     var lineChartWidth;
     var lineChartHeight;
     var x;
     var y;
     var line;
+    var deathLine;
     var lineChart = lineChartSvg.append('g').attr("id","lineChart");
     const parseTime = d3.timeParse("%Y-%m-%d");
+    const bisectDate = d3.bisector(d3.descending).left;
 
     function clicked() {
       console.log("clicked");
@@ -453,8 +461,9 @@ export default {
           "deaths": + d.deaths
         })
       });
+      d3.select("#linecharthead").html(dataProperties.name + ", " + dataProperties.stateName);
       console.log("data update " + JSON.stringify(data));
-      modal.style("display","flex");
+      modal.style("display",null);
       svgWidth = +lineChartSvg.style("width").replace("px","");
       console.log("svg width " + svgWidth)
       svgHeight = +lineChartSvg.style("height").replace("px","");
@@ -466,27 +475,123 @@ export default {
       lineChart
         .attr('transform', 'translate(' + lcMargin.left + ',' + lcMargin.top + ')');
       x = d3.scaleTime().domain(d3.extent(data.map(d => d.date))).range([0, lineChartWidth]);
-      y = d3.scaleLinear().domain(d3.extent(data.map(d => d.cases))).range([lineChartHeight, 0]);
+      let ex = d3.extent(data.map(d => d.cases))
+      y = d3.scaleLinear().domain([0,ex[1]]).range([lineChartHeight, 0]);
       line = d3.line().x(d => x(d.date)).y(d => y(d.cases));
+      deathLine = d3.line().x(d => x(d.date)).y(d => y(d.deaths));
       updateLineChart(data);
-      // lineChart
-      //   .append("path")
-      //   .data([data])
-      //   .attr("class","line")
-      //   .attr("d",line);
       
     }
 
     function updateLineChart(data) {
-      var u = lineChart.selectAll("path")
-        .data([data])
-      u.enter()
+      lineChart
         .append("path")
-        .merge(u)
+        .data([data])
         .attr("class", "line")
         .attr("d",line)
+      lineChart
+        .append("path")
+        .data([data])
+        .attr("class", "deathline")
+        .attr("d",deathLine)
 
-      u.exit().remove();
+      lineChartSvg
+        .append("g")
+        .attr("id","axis")
+        .attr("transform", "translate(" + lcMargin.left + "," + (svgHeight - lcMargin.bottom) + ")")
+        .call(d3.axisBottom(x).ticks(5));
+
+      // add y axis
+      lineChartSvg.append("g").call(d3.axisLeft(y).ticks(5)).attr("id","axis").attr("transform", "translate(" + lcMargin.left + ","+ lcMargin.top + ")");
+
+        // create focus area
+      const focus = lineChart
+        .append("g")
+        .attr("class", "focus")
+        .style("display", "none");
+
+      focus
+        .append("line")
+        .attr("class", "x-hover-line hover-line")
+        .attr("y1", 0)
+        .attr("y2", lineChartHeight);
+
+      focus
+        .append("line")
+        .attr("class", "y-hover-line hover-line")
+        .attr("x1", 0)
+        .attr("x2", lineChartSvg);
+
+      focus.append("circle").attr("r", 6);
+
+      // backdrop for tooltip
+      focus
+        .append("rect")
+        .attr("class", "tooltip")
+        .attr("width", "160")
+        .attr("height", "60")
+        .attr("y", "-4em")
+        .attr("x", "-80")
+        .attr("rx", "5")
+        .attr("ry", "5");
+
+      const focusText = focus.append("text").attr("class", "textBox");
+
+      focusText
+        .append("tspan")
+        .attr("class", "tooltip-text")
+        .attr("x", "-75")
+        .attr("dy", "-1em");
+
+      focusText
+        .append("tspan")
+        .attr("class", "tooltip-text")
+        .attr("x", "-75")
+        .attr("dy", "-1em");
+      
+      focusText
+        .append("tspan")
+        .attr("class", "tooltip-text")
+        .attr("x", "-75")
+        .attr("dy", "-1em");
+
+      // append area for pulling mouseovers and calling function to display lines
+      // and text boxes
+      lineChart
+        .append("rect")
+        .attr("transform", "translate(" + 0 + "," + 0 + ")")
+        .attr("class", "overlay")
+        .attr("fill", "transparent")
+        .attr("width", lineChartWidth)
+        .attr("height", lineChartHeight)
+        .on("mouseover", function() {
+          // focus.style("display", null);
+        })
+        .on("mouseout", function() {
+          focus.style("display", "none");
+        })
+        .on("mousemove", mousemove);
+
+      function mousemove() {
+        const x0 = x.invert(d3.mouse(this)[0]);
+        const i = bisectDate(data.map(d => d.date), x0);
+        const d0 = data[i - 1];
+        const d1 = data[i];
+        const d = x0 - d0.date < d1.date - x0 ? d1 : d0;
+        focus.style("display",null);
+        focus.attr(
+          "transform",
+          "translate(" + x(d.date) + "," + y(d.cases) + ")"
+        );
+        focus
+          .selectAll("tspan")
+          .nodes()[2].textContent = `Date: ${d.date.toDateString()}`;
+        focus.selectAll("tspan").nodes()[1].textContent = `Cases: ${d.cases}`;
+        focus.selectAll("tspan").nodes()[0].textContent = `Deaths: ${d.deaths}`;
+        
+        focus.select(".x-hover-line").attr("y2", lineChartHeight - y(d.cases));
+        focus.select(".y-hover-line").attr("x2", -x(d.date));
+      }
     }
 
     function zoomed() {
@@ -731,21 +836,22 @@ export default {
     box-shadow: 0 8px 6px -6px black;
 
   .modal
-    display: none  
-    align-items: center 
-    justify-content: center
-    display: none
+    position: fixed
     z-index: 1
-    left: 0
-    top: 0
+    transform: translate(-50%,-50%)
+    left: 50%
+    top: 50%
     width: 100%
     height: 100vh
     overflow: auto
     background-color: rgb(0,0,0)
     background-color: rgba(0,0,0,0.4)
-    position: absolute
 
   .modal-content
+    position: fixed
+    left: 50%
+    top: 50%
+    transform: translate(-50%, -50%)
     height: 40%
     background-color: #fefefe
     padding: 20px
@@ -755,12 +861,19 @@ export default {
   #linechartsvg
     height: 100%
     width: 100%
+    overflow: visible
 
   .line
-    fill: none;
-    stroke: #d4d8da;
-    stroke-width: 1px;
-    text-anchor: end;
+    fill: none
+    stroke: #03dac5
+    stroke-width: 3px
+    text-anchor: end
+
+  .deathline
+    fill: none
+    stroke: rgb(165,0,14)
+    stroke-width: 3px
+    text-anchor: end
 
   .close 
     color: #aaa
@@ -777,6 +890,31 @@ export default {
       color: black
       text-decoration: none
       cursor: pointer
+
+  .tooltip
+    fill: $highlight
+    opacity: 0.9
+
+  .tooltip-text
+    fill: #ffffff
+    opacity: 0.87
+
+  .focus circle
+    fill: #f1f3f3;
+    stroke: $primary
+    stroke-width: 5px;
+
+  .hover-line 
+    stroke: $primary
+    stroke-width: 2px;
+    stroke-dasharray: 2, 4;
+    z-index: 5;
+
+  #linecharthead
+    margin-block-start: 0em
+    margin-block-end: 0em
+    text-align: center
+  
     
 
   @keyframes spin
